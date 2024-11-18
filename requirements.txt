@@ -1,4 +1,5 @@
 aiohttp
+requests
 py-cord
 python-dotenv
-pyjwt
+mysql-connector-python

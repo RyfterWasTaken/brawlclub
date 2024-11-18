@@ -1,7 +1,9 @@
 import aiohttp
 import asyncio
+import discord
 from hilo_conversion import get_tag
 from my_requests import hp_request, sc_request
+import traceback
 
 CLUB_ROLES = {
     1: "Member",
@@ -11,42 +13,56 @@ CLUB_ROLES = {
 }
 
 class ClubBot:
-    def __init__(self, scid_token, webhook_url):
+    def __init__(self, scid_token, channel_id):
         self.scid_token = scid_token
-        self.webhook_url = webhook_url
+        self.channel_id = channel_id
+        self.webhook_url = ""
         self.meowToken = ""
 
-    async def login(self):
+    async def login(self, bot: discord.Bot):
         async with aiohttp.ClientSession() as client:
             headers = {
                 "authorization": f"Bearer {self.scid_token}",
                 "User-Agent": f"scid/1.4.16-f (iOS 16.7.8; laser-prod; iPhone10,3"
             }
             response = await client.get("https://security.id.supercell.com/api/security/v1/sessionToken", headers=headers, timeout=20.0)
-            data = await response.json()
-            print(data)
-            if data["ok"]:
-                form_data = {"scid_token": data["token"], "application": "laser-prod"}
+            response = await response.json()
+            if response["ok"]:
+                form_data = {"scid_token": response["token"], "application": "laser-prod"}
                 await client.post("https://id.supercell.com/api/ingame/account/tokenLogin.confirm",
                                                 headers={"content-type": "application/x-www-form-urlencoded; charset=utf-8"},
                                                 data=form_data)
-                response = await hp_request(f"bot/{data["token"]}/doLogin")
+                
+                token = response["token"]
                 while True:
                     try:
+                        response = await hp_request(f"bot/{token}/doLogin")
+                        print(response)
+                        if response["state"]==503:
+                            raise Exception("Invalid SC token")
                         # TODO: Remove hardcoded value when AllianceInfo works
                         self.name = "testii"
                         self.meowToken = response["meowToken"]
                         print(f"Logged in: {response}")
+                        channel = await bot.fetch_channel(self.channel_id)
+                        for webhook in await channel.webhooks():
+                            if webhook.name == "club-bot webhook":
+                                self.webhook_url = webhook.url
+                        if not self.webhook_url:
+                            webhook = await channel.create_webhook(name = "club-bot webhook")
+                            self.webhook_url = webhook.url
+                    
                         return
-                    except:
-                        print(f"Couldn't login: error code {response["status"]}, Retrying in 10s")
+                    except aiohttp.ClientResponseError as e:
+                        print(f"Couldn't login: Server returned {e.status}, retrying in 10s")
+                    except Exception as e:
+                        print(f"Couldn't login: {e}, retrying in 10s")
                         await asyncio.sleep(10)
                     
     async def process(self):
         response = await hp_request(f"bot/{self.meowToken}/getUpdates")
-        if response["state"]==0:
-            for message in response["response"]:
-                await self.process_message(message)
+        for message in response["response"]:
+            await self.process_message(message)
         
     async def process_message(self, message):
         tag = get_tag(message["AccountId"])
