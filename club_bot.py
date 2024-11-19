@@ -17,6 +17,7 @@ class ClubBot:
         self.channel_id = channel_id
         self.webhook_url = ""
         self.meowToken = ""
+        self.tag = ""
         self.name = "Unknown"
 
     async def login(self, bot: discord.Bot, retry = True):
@@ -47,6 +48,7 @@ class ClubBot:
                         for webhook in await channel.webhooks():
                             if webhook.name == "club-bot webhook":
                                 self.webhook_url = webhook.url
+
                         if not self.webhook_url:
                             webhook = await channel.create_webhook(name = "club-bot webhook")
                             self.webhook_url = webhook.url
@@ -66,7 +68,7 @@ class ClubBot:
         response = await hp_request(f"bot/{self.meowToken}/getUpdates")
         for message in response["response"]:
             if message["messageType"]=="AllianceData":
-                self.name = message["payload"]["AllianceHeaderEntry"]["Name"]
+                self.process_alliance(message["payload"])
             else: print(message)
                 # await self.process_message(message)
         
@@ -92,4 +94,7 @@ class ClubBot:
         
         async with aiohttp.ClientSession() as client:
             await client.post(self.webhook_url, json=data)
+
+    async def process_alliance(self, payload):
+        self.name = payload["AllianceHeaderEntry"]["Name"]
 
