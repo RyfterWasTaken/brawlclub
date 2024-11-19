@@ -1,9 +1,8 @@
-import aiohttp
-import asyncio
 import discord
+import aiohttp, httpx, asyncio
 from hilo_conversion import get_tag
 from my_requests import hp_request, sc_request
-import traceback
+
 
 CLUB_ROLES = {
     1: "Member",
@@ -18,8 +17,9 @@ class ClubBot:
         self.channel_id = channel_id
         self.webhook_url = ""
         self.meowToken = ""
+        self.name = "Unknown"
 
-    async def login(self, bot: discord.Bot):
+    async def login(self, bot: discord.Bot, retry = True):
         async with aiohttp.ClientSession() as client:
             headers = {
                 "authorization": f"Bearer {self.scid_token}",
@@ -38,12 +38,11 @@ class ClubBot:
                     try:
                         response = await hp_request(f"bot/{token}/doLogin")
                         print(response)
-                        if response["state"]==503:
-                            raise Exception("Invalid SC token")
-                        # TODO: Remove hardcoded value when AllianceInfo works
-                        self.name = "testii"
+                        if response["state"]==503: raise Exception()
                         self.meowToken = response["meowToken"]
+
                         print(f"Logged in: {response}")
+                        
                         channel = await bot.fetch_channel(self.channel_id)
                         for webhook in await channel.webhooks():
                             if webhook.name == "club-bot webhook":
@@ -53,25 +52,33 @@ class ClubBot:
                             self.webhook_url = webhook.url
                     
                         return
-                    except aiohttp.ClientResponseError as e:
-                        print(f"Couldn't login: Server returned {e.status}, retrying in 10s")
+
                     except Exception as e:
+                        if retry==False:
+                            raise Exception("An error occured, please try again later")
                         print(f"Couldn't login: {e}, retrying in 10s")
                         await asyncio.sleep(10)
                     
+                        
+
+
     async def process(self):
         response = await hp_request(f"bot/{self.meowToken}/getUpdates")
         for message in response["response"]:
-            await self.process_message(message)
+            if message["messageType"]=="AllianceData":
+                self.name = message["payload"]["AllianceHeaderEntry"]["Name"]
+            else: print(message)
+                # await self.process_message(message)
         
     async def process_message(self, message):
-        tag = get_tag(message["AccountId"])
         # TODO: Remove hardcoded value when AccountId works
+        # tag = get_tag(message["AccountId"])
         tag = "GC2GPURJ8"
-        data = await sc_request(f"players/%23{tag}")
         player_name = message["PlayerName"]
         role = CLUB_ROLES[message["PlayerRole"]]
         content = message["Message"]
+
+        data = await sc_request(f"players/%23{tag}")
         print(f"{player_name} ({role} of {self.name}) sent {content}")
         data = {
             "content": "",

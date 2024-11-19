@@ -1,7 +1,7 @@
-import aiohttp, urllib
+import aiohttp, urllib, httpx
 
-async def request_login(email):
-    async with aiohttp.ClientSession() as client:
+async def request_login(email) -> httpx.Response: 
+    async with httpx.AsyncClient() as client:
         data = {
             "lang": "en",
             "email": email,
@@ -9,18 +9,20 @@ async def request_login(email):
             "game": "laser", 
             "env": "prod",
         }
-        encoded_data = urllib.parse.urlencode(data)
-        
+        wheel = urllib.parse.urlencode(data)
         return await client.post("https://id.supercell.com/api/ingame/account/login", headers={
+            "Accept": "*/*",
+            "Connection": "keep-alive",
             "accept-encoding": "gzip",
             "accept-language": "ru",
-            "content-length": str(len(encoded_data)),
+            "content-length": str(len(wheel)),
             "content-type": "application/x-www-form-urlencoded; charset=utf-8",
             "host": "id.supercell.com",
             "user-agent": "scid/1.4.16-f (Android 15; laser-prod; Pixel)"
-        }, data=data)
+        }, data=wheel)
 
-async def validate_login(email, pin):
+
+async def validate_login(email, pin) -> dict:
     async with aiohttp.ClientSession() as client:
         payload = {"email": email, "pin": pin}
         headers = {"User-Agent": f"scid/1.4.16-f (Android 15; laser-prod; Pixel)", "content-type": "application/x-www-form-urlencoded; charset=utf-8"}

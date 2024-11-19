@@ -1,8 +1,7 @@
-from base64 import b64decode as base64_b64decode
+import httpx
 from datetime import datetime
 from json import loads as json_loads
-import requests
-from datetime import datetime
+from base64 import b64decode as base64_b64decode
 
 def get_key(email, password):
     _keys = []
@@ -11,7 +10,7 @@ def get_key(email, password):
     key_scopes = "brawlstars"
     print("Getting key")
 
-    with requests.Session() as client:
+    with httpx.Client() as client:
         body = {"email": email, "password": password}
         response = client.post("https://developer.brawlstars.com/api/login", json=body)
         if response.status_code == 403:
