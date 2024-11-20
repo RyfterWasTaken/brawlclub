@@ -41,8 +41,8 @@ async def add_club_bridge(ctx: discord.ApplicationContext,
         await ctx.respond(f"{email} is not a valid email adress", ephemeral=True)
         return
     interaction_response = await ctx.respond(embed=loading(), ephemeral=True)
-    response = await request_login(email)
-    print(f"{response.status_code}: {response.text}")
+    # response = await request_login(email)
+    # print(f"{response.status_code}: {response.text}")
     desc = f"You should recieve an email shortly at `{email}`, press the button below to enter the pin\n### WARNING\n-# This could result in the account getting banned(very rare), and gives the bot full control of the account. \n-# Make sure to use a disposable account. The bot is not responsible for any loss of accounts"
     await interaction_response.edit_original_response(content="", embed=discord.Embed(description=desc), view=LoginButton(email, clubs, ctx.channel_id, interaction_response))
 

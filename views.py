@@ -1,3 +1,4 @@
+import re
 import discord
 from club_bot import ClubBot
 from sc_login import validate_login
@@ -26,36 +27,36 @@ class LoginModal(discord.ui.Modal):
         self.channel_id = channel_id
         self.prev_interaction = prev_interaction
         
-        self.add_item(discord.ui.InputText(label="Enter pin", min_length=6, max_length=6))
+        self.add_item(discord.ui.InputText(label="Enter pin", min_length=6, max_length=7))
     
     async def callback(self, interaction: discord.Interaction):
-        pin = self.children[0].value
-        response = await validate_login(self.email, pin) 
-        # TODO: Remove hardcoded values
-        # response =  {
-        #     "ok": True,
-        #     "tag": "#GCVV09UC2",
-        #     "token": "eyJ0eXAiOiJKV1QiLCJraWQiOiJjNzVhN2Y4M2U5MzMiLCJhbGciOiJFUzI1NiJ9.eyJzdWIiOiI1MS05YTZhZGViNy1jYWQwLTQwZWUtYjk2MS05MzQ3YWFlZjBhMGUiLCJnYW1lIjoibGFzZXIiLCJpc3MiOiJpZC5zdXBlcmNlbGwuY29tIiwicGlkIjoiMTktNTEwNTc2MDciLCJodHRwczovL2lkLnN1cGVyY2VsbC5jb20vYXBwIjoibGFzZXIiLCJlbnYiOiJwcm9kIiwiaHR0cHM6Ly9pZC5zdXBlcmNlbGwuY29tL3R5cGUiOiJhY2NvdW50IiwiaHR0cHM6Ly9pZC5zdXBlcmNlbGwuY29tL2FwcEVudiI6InByb2QiLCJodHRwczovL2lkLnN1cGVyY2VsbC5jb20vYXBwQWNjb3VudElkIjoiMTktNTEwNTc2MDciLCJodHRwczovL2lkLnN1cGVyY2VsbC5jb20vaW5pdGlhbFJlZnJlc2hUb2tlbklzc3VlZEF0IjoxNzMxNTE5Mzg4LCJpYXQiOjE3MzE1MTkzODgsInNjaWQiOiI1MS05YTZhZGViNy1jYWQwLTQwZWUtYjk2MS05MzQ3YWFlZjBhMGUifQ.vzpTa_zgw9BSLZdrptuMuCBn27j4TAdG-5aZ2tLF4ST8oZbUBlmP-9Nxpp1KnJvczabwSMFFBRhpnp9PuiLxww"
-        # }
         try:
+            await interaction.response.send_message(content=".", delete_after=0.0, ephemeral=True)
+            pin = "".join(re.findall(r"\d", self.children[0].value))
+            print(f"{pin}: {type(pin)}")
+            print(f"{self.children[0].value}: {type(self.children[0].value)}")
+            type
+            response = await validate_login(self.email, pin) 
             if response["ok"] == True:
                 tag: str = response["tag"]
                 tag = tag.replace("#", "%23")
                 token = response["token"]
-                response = await sc_request(f"players/{tag}")
+                
+                # TODO: Remove
+                print(token)
 
+                response = await sc_request(f"players/{tag}")
                 club_bot = ClubBot(token, interaction.channel_id)
 
                 await club_bot.login(interaction.client, True)
                 self.clubs.append(club_bot)
                 
-                await self.prev_interaction.edit_original_response(embed=discord.Embed(f"Successfully logged in to {response["name"]}. Activating club bot for {response["club"]["name"]}")) 
+                await self.prev_interaction.edit_original_response(content="", embed=discord.Embed(description=f"Successfully logged in to {response["name"]}. Activating club bot for {response["club"]["name"]}")) 
             else:
-                await self.prev_interaction.edit_original_response(embed=discord.Embed(description=f"Wrong pin, try again")) 
+                print(response)
+                await self.prev_interaction.edit_original_response(content="", embed=discord.Embed(description=f"Wrong pin, try again")) 
+
+
         except Exception as e:
             print(e) 
-            await self.prev_interaction.edit_original_response("An error occured, try again later")
-        try:
-            await interaction.response.send_message(content=".", delete_after=0.0)
-        except:
-            pass
+            await self.prev_interaction.edit_original_response(content="An error occured, try again later")

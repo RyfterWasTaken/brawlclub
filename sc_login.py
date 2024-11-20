@@ -29,19 +29,19 @@ async def validate_login(email, pin) -> dict:
         try:
             response = await client.post("https://id.supercell.com/api/ingame/account/login.validate", headers=headers, data=payload)
             data = await response.json()
-            tag = data["data"]["application"]["account"]
 
             response = await client.post("https://id.supercell.com/api/ingame/account/login.confirm", headers=headers, data=payload)
-            data = await response.json()
-            if data["ok"] == True:
-                token = data["data"]["scidToken"]
+            data2 = await response.json()
+            if data2["ok"] == True:
+                token = data2["data"]["scidToken"]
+                tag = data["data"]["application"]["account"]
 
                 return {
                     "ok": True,
                     "tag": tag,
                     "token": token
                 }   
-            else: return {"ok": False}
+            else: return data2
         except Exception as e:
             return {
                 "ok": False,
