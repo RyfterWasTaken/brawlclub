@@ -1,7 +1,7 @@
 import discord
 import aiohttp, httpx, asyncio
-from hilo_conversion import get_tag
-from my_requests import hp_request, sc_request
+from modules.hilo_conversion import get_tag
+from modules.my_requests import hp_request, sc_request
 
 
 CLUB_ROLES = {
@@ -17,8 +17,7 @@ class ClubBot:
         self.channel_id = channel_id
         self.webhook_url = ""
         self.meowToken = ""
-        self.tag = ""
-        self.name = "Unknown"
+        self.name = "Unknown club"
 
     async def login(self, bot: discord.Bot, retry = True):
         async with aiohttp.ClientSession() as client:
@@ -44,7 +43,7 @@ class ClubBot:
 
                         print(f"Logged in: {response}")
                         
-                        channel = await bot.fetch_channel(self.channel_id)
+                        channel: discord.TextChannel = await bot.fetch_channel(self.channel_id)
                         for webhook in await channel.webhooks():
                             if webhook.name == "club-bot webhook":
                                 self.webhook_url = webhook.url

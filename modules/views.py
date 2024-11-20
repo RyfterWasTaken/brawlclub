@@ -1,9 +1,10 @@
 import re
 import discord
-from club_bot import ClubBot
-from sc_login import validate_login
-from my_requests import sc_request
-from loading import loading
+from modules.club_bot import ClubBot
+from modules.sc_login import validate_login
+from modules.my_requests import sc_request
+from modules.loading import loading
+from sql_executor import sql_exec
 
 class LoginButton(discord.ui.View):
     def __init__(self, email: str, clubs: list[ClubBot], channel_id: int, prev_interaction: discord.Interaction):
@@ -38,10 +39,14 @@ class LoginModal(discord.ui.Modal):
             type
             response = await validate_login(self.email, pin) 
             if response["ok"] == True:
+                # TODO: Implement DB saving/checking
+
                 tag: str = response["tag"]
                 tag = tag.replace("#", "%23")
                 token = response["token"]
                 
+
+
                 # TODO: Remove
                 print(token)
 

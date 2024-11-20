@@ -21,7 +21,6 @@ async def request_login(email) -> httpx.Response:
             "user-agent": "scid/1.4.16-f (Android 15; laser-prod; Pixel)"
         }, data=wheel)
 
-
 async def validate_login(email, pin) -> dict:
     async with aiohttp.ClientSession() as client:
         payload = {"email": email, "pin": pin}

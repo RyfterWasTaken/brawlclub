@@ -1,13 +1,8 @@
 import os
 import aiohttp
-from key_gen import get_key
-from dotenv import load_dotenv
+from modules.key_gen import get_key
+from modules.config import dev_email, dev_pass, hp_key
 
-load_dotenv()  
-hp_key = os.getenv('HPKEY')
-
-dev_email = os.getenv('DEVEMAIL')
-dev_pass = os.getenv('DEVPASSWORD')
 sc_key = get_key(dev_email, dev_pass)
 
 
@@ -18,7 +13,7 @@ async def hp_request(endpoint):
         try:
             return await response.json()
         except Exception as e: 
-            return response.text
+            return await response.text()
 
 async def sc_request(endpoint):
     async with aiohttp.ClientSession() as client:
@@ -31,5 +26,5 @@ async def sc_request(endpoint):
         try:
             return await response.json()
         except Exception as e: 
-            return response.text
+            return await response.text()
     

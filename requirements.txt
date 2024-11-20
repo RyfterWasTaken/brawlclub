@@ -1,5 +1,5 @@
 aiohttp
-requests
+httpx
 py-cord
 python-dotenv
-mysql-connector-python
+aiomysql
